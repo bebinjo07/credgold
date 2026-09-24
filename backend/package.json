@@ -1,0 +1,29 @@
+{
+  "name": "gold-loan-backend",
+  "version": "1.0.0",
+  "description": "Gold Loan & Pawn Shop Ledger Management Backend with WhatsApp/SMS Reminders",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node -e \"const fs = require('fs'); const db = require('./src/config/db'); db.query(fs.readFileSync('./src/db/schema.sql', 'utf8')).then(() => console.log('Database migrated successfully')).catch(console.error).finally(() => process.exit());\"",
+    "seed": "node -e \"const fs = require('fs'); const db = require('./src/config/db'); db.query(fs.readFileSync('./src/db/seed.sql', 'utf8')).then(() => console.log('Database seeded successfully')).catch(console.error).finally(() => process.exit());\"",
+    "cron:reminders": "node src/cron/monthlyReminders.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
+    "pg": "^8.13.0",
+    "twilio": "^5.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
