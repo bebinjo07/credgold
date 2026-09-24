@@ -6,8 +6,8 @@ import {
   Search, Filter, PlusCircle, ArrowLeft, 
   Coins, Scale, CheckCircle2, AlertCircle, Phone, Lock, Unlock, Eye
 } from 'lucide-react';
-import { Loan } from '../../types';
-import PaymentModal from '../../components/PaymentModal';
+import { Loan } from '@/types';
+import PaymentModal from '@/components/PaymentModal';
 
 export default function LoansLedgerPage() {
   const [loans, setLoans] = useState<Loan[]>([]);

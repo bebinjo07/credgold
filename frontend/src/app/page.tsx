@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { PlusCircle, BookOpen, Clock, ShieldCheck, Download } from 'lucide-react';
-import DashboardMetrics from '../components/DashboardMetrics';
-import PaymentModal from '../components/PaymentModal';
+import DashboardMetrics from '@/components/DashboardMetrics';
+import PaymentModal from '@/components/PaymentModal';
 
 export default function DashboardPage() {
   const [paymentModal, setPaymentModal] = useState<{

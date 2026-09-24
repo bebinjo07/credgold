@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
-import LoanCreationForm from '../../../components/LoanCreationForm';
+import LoanCreationForm from '@/components/LoanCreationForm';
 
 export default function NewLoanPage() {
   return (
