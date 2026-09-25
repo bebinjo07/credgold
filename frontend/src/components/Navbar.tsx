@@ -2,9 +2,19 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { PlusCircle, LayoutDashboard, BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { PlusCircle, LayoutDashboard, BookOpen, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
   return (
     <header className="bg-slate-900 text-white sticky top-0 z-50 shadow-md border-b border-amber-500/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,7 +61,7 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* User Badge / Status */}
+          {/* User Badge / Status / Logout */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -60,13 +70,22 @@ export default function Navbar() {
 
             <div className="flex items-center gap-2 border-l border-slate-800 pl-3">
               <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center font-bold text-xs">
-                AD
+                {user?.name?.charAt(0)?.toUpperCase() || 'AD'}
               </div>
               <div className="text-left hidden sm:block">
-                <p className="text-xs font-semibold text-slate-200 leading-none">Rajesh Verma</p>
+                <p className="text-xs font-semibold text-slate-200 leading-none">{user?.name || 'Admin'}</p>
                 <p className="text-[10px] text-amber-400 font-medium">Shop Owner (Admin)</p>
               </div>
             </div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+              title="Logout"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </div>
       </div>
