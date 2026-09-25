@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "framework": "nextjs",
-  "rootDirectory": "frontend",
-  "buildCommand": "npm install --legacy-peer-deps --loglevel=error --no-audit --no-fund && npm run build",
-  "outputDirectory": ".next"
-}
