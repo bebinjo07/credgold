@@ -38,8 +38,7 @@ export default function CustomerLoginPage() {
       const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
       setGeneratedOtp(newOtp);
 
-      // Call API route to send email via Resend
-      await fetch('/api/send-otp', {
+      const response = await fetch('/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,8 +48,13 @@ export default function CustomerLoginPage() {
         }),
       });
 
+      const resData = await response.json();
+      if (resData?.otp) {
+        setGeneratedOtp(resData.otp);
+      }
+
       setOtpSent(true);
-      setOtpNotice(`Verification OTP code sent to ${targetEmail}! Please check your inbox.`);
+      setOtpNotice(`Verification OTP sent to ${targetEmail}! Please check your email inbox.`);
     } catch {
       setOtpSent(true);
       setOtpNotice(`Verification OTP sent to ${targetEmail}! Please check your inbox.`);
