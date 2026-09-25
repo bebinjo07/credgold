@@ -8,7 +8,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['images.unsplash.com', 'res.cloudinary.com'],
+    unoptimized: true,
   },
 };
 

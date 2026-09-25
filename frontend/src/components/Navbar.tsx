@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, PlusCircle, LayoutDashboard, BookOpen, Vault, BellRing } from 'lucide-react';
+import { PlusCircle, LayoutDashboard, BookOpen } from 'lucide-react';
 
 export default function Navbar() {
   return (

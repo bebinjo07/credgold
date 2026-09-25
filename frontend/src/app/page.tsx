@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { PlusCircle, BookOpen, Clock, ShieldCheck, Download } from 'lucide-react';
+import { PlusCircle, BookOpen } from 'lucide-react';
 import DashboardMetrics from '@/components/DashboardMetrics';
 import PaymentModal from '@/components/PaymentModal';
 

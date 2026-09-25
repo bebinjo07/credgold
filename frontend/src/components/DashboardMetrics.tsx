@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Coins, Vault, TrendingUp, AlertOctagon, 
-  Send, Receipt, Calendar, ArrowUpRight, CheckCircle2, User, Phone, RefreshCw
+  Send, CheckCircle2, Phone, RefreshCw
 } from 'lucide-react';
-import { DashboardMetrics as MetricsType } from '../types';
+import { DashboardMetrics as MetricsType } from '@/types';
 
 interface DashboardProps {
   onOpenPayment?: (loanId: string, loanNumber: string) => void;

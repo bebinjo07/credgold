@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Search, Filter, PlusCircle, ArrowLeft, 
-  Coins, Scale, CheckCircle2, AlertCircle, Phone, Lock, Unlock, Eye
+  CheckCircle2, Phone, Unlock
 } from 'lucide-react';
 import { Loan } from '@/types';
 import PaymentModal from '@/components/PaymentModal';

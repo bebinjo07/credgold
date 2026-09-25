@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Plus, Trash2, ShieldCheck, Scale, Calculator, 
-  Camera, CheckCircle2, AlertTriangle, ArrowRight, UserCheck, Phone, MapPin, FileText
+  Plus, Trash2, Scale, Calculator, 
+  CheckCircle2, AlertTriangle, ArrowRight, UserCheck, Phone
 } from 'lucide-react';
-import { MetalType, PledgedItem } from '../types';
+import { MetalType, PledgedItem } from '@/types';
 
 interface LoanFormProps {
   onSuccess?: (loanData: any) => void;

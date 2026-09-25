@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { X, CheckCircle2, MessageSquare, Receipt, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, MessageSquare, Receipt, ArrowRight } from 'lucide-react';
 
 interface PaymentModalProps {
   isOpen: boolean;
