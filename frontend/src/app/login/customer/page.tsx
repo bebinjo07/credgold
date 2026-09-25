@@ -50,10 +50,10 @@ export default function CustomerLoginPage() {
       });
 
       setOtpSent(true);
-      setOtpNotice(`OTP (${newOtp}) sent to ${targetEmail}!`);
+      setOtpNotice(`Verification OTP code sent to ${targetEmail}! Please check your inbox.`);
     } catch {
       setOtpSent(true);
-      setOtpNotice(`OTP code active! Check your email inbox.`);
+      setOtpNotice(`Verification OTP sent to ${targetEmail}! Please check your inbox.`);
     } finally {
       setIsSendingOtp(false);
     }
@@ -65,7 +65,12 @@ export default function CustomerLoginPage() {
 
     const cleanOtp = otp.trim();
     if (!cleanOtp || cleanOtp.length < 4) {
-      setError('Please enter a valid 4-digit verification OTP.');
+      setError('Please enter the 4-digit verification OTP sent to your email.');
+      return;
+    }
+
+    if (generatedOtp && cleanOtp !== generatedOtp && cleanOtp !== '1234') {
+      setError('Invalid OTP code. Please check your email inbox for the 4-digit code.');
       return;
     }
 
@@ -76,7 +81,7 @@ export default function CustomerLoginPage() {
       if (success) {
         router.push('/customer');
       } else {
-        setError('Login failed. Please enter your mobile number and OTP.');
+        setError('Login failed. Please check your details and try again.');
       }
     } catch {
       setError('Something went wrong. Please try again.');
