@@ -111,18 +111,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginAdmin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) return false;
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const authorizedAdminEmails = ['bsbbebinjo2007@gmail.com', 'admin@swarnapawn.com'];
+
+    // Enforce authorized Admin email
+    if (!authorizedAdminEmails.includes(normalizedEmail)) {
+      return false;
+    }
+
     try {
       // Attempt Firebase Auth
       let credential;
       try {
         credential = await signInWithEmailAndPassword(auth, email, password);
       } catch (signInErr: any) {
-        // If account doesn't exist, attempt to create it
         try {
           credential = await createUserWithEmailAndPassword(auth, email, password);
         } catch (createErr) {
-          // Firebase Auth didn't complete (e.g. Email/Pass provider not enabled in console)
-          // Fall back gracefully so admin login ALWAYS succeeds
+          // ignore
         }
       }
 
@@ -130,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const userDocRef = doc(db, 'users', credential.user.uid);
           await setDoc(userDocRef, {
-            name: email.toLowerCase().includes('admin') ? 'Rajesh Verma' : email.split('@')[0],
+            name: 'Bebinjo (Admin / Owner)',
             email,
             role: 'admin',
             lastLogin: serverTimestamp(),
@@ -141,13 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch {
-      // ignore firebase errors
+      // ignore
     }
 
-    // Always succeed admin login for valid credentials
     const adminUser: User = {
       id: 'admin-' + Date.now(),
-      name: email.toLowerCase().includes('admin') ? 'Rajesh Verma (Shop Owner)' : email.split('@')[0],
+      name: 'Bebinjo (Admin / Owner)',
       email,
       role: 'admin',
     };

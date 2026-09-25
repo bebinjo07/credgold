@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
       if (success) {
         router.push('/');
       } else {
-        setError('Invalid email or password. Please try again.');
+        setError('Access Denied: Only bsbbebinjo2007@gmail.com is authorized as Admin.');
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
             </div>
             <h1 className="text-2xl font-bold text-white">Admin Login</h1>
             <p className="text-slate-400 text-sm mt-2">
-              Shop Owner & Staff Access
+              Authorized Owner & Admin Portal
             </p>
           </div>
 
@@ -83,13 +83,13 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Email Address
+                Admin Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@swarnapawn.com"
+                placeholder="bsbbebinjo2007@gmail.com"
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition"
                 autoComplete="email"
               />
@@ -134,19 +134,20 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Admin Info */}
           <div className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Demo Credentials
+              Authorized Admin ID
             </p>
             <div className="space-y-1 text-xs text-slate-500">
               <p>
                 <span className="text-slate-400">Email:</span>{' '}
-                <code className="text-amber-400/80 bg-amber-500/10 px-1.5 py-0.5 rounded">admin@swarnapawn.com</code>
+                <code className="text-amber-400/80 bg-amber-500/10 px-1.5 py-0.5 rounded">bsbbebinjo2007@gmail.com</code>
               </p>
               <p>
                 <span className="text-slate-400">Password:</span>{' '}
-                <code className="text-amber-400/80 bg-amber-500/10 px-1.5 py-0.5 rounded">admin123</code>
+                <code className="text-amber-400/80 bg-amber-500/10 px-1.5 py-0.5 rounded">admin123</code>{' '}
+                <span className="text-slate-600">(or your set password)</span>
               </p>
             </div>
           </div>
