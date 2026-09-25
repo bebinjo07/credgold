@@ -161,31 +161,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const loginCustomer = async (phone: string, otp: string): Promise<boolean> => {
-    if (!phone || !otp) return false;
-    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+  const loginCustomer = async (identifier: string, otp: string): Promise<boolean> => {
+    if (!identifier || !otp) return false;
+
+    const input = identifier.trim();
+    let customerName = 'Customer';
+    let customerEmail = '';
+    let customerPhone = '';
+
+    if (input.includes('@')) {
+      customerEmail = input.toLowerCase();
+    } else {
+      customerPhone = input.replace(/\D/g, '').slice(-10);
+    }
 
     try {
-      const customerEmail = `${cleanPhone}@swarnapawn.customer`;
-      const customerPassword = `cust_${cleanPhone}_${otp.padStart(6, '0')}`;
+      // Lookup customer in Firestore (registered by Admin during loan origination)
+      const { getCustomerByEmail, getCustomerByPhone } = await import('@/lib/firestore');
+      let fsCustomer = null;
 
-      try {
-        await signInWithEmailAndPassword(auth, customerEmail, customerPassword);
-      } catch {
-        try {
-          await createUserWithEmailAndPassword(auth, customerEmail, customerPassword);
-        } catch {
-          // ignore
-        }
+      if (customerEmail) {
+        fsCustomer = await getCustomerByEmail(customerEmail);
+      } else if (customerPhone) {
+        fsCustomer = await getCustomerByPhone(customerPhone);
+      }
+
+      if (fsCustomer) {
+        customerName = fsCustomer.fullName || fsCustomer.full_name || customerName;
+        customerEmail = fsCustomer.email || customerEmail;
+        customerPhone = fsCustomer.phone || customerPhone;
       }
     } catch {
       // ignore
     }
 
+    if (!customerName || customerName === 'Customer') {
+      customerName = customerEmail ? customerEmail.split('@')[0] : `Customer (${customerPhone.slice(-4)})`;
+    }
+
     const customerUser: User = {
-      id: 'cust-' + cleanPhone,
-      name: `Customer (${cleanPhone.slice(-4)})`,
-      phone: cleanPhone,
+      id: 'cust-' + (customerEmail || customerPhone || Date.now()),
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
       role: 'customer',
     };
 

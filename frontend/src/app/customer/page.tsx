@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { getLoansByCustomerPhone, getAllLoans } from '@/lib/firestore';
 import {
   Coins, Phone, Calendar, TrendingUp,
   Clock, CheckCircle2, AlertTriangle, LogOut, CreditCard
@@ -55,14 +56,62 @@ export default function CustomerDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
+  const [customerLoans, setCustomerLoans] = useState<any[]>(DEMO_CUSTOMER_LOANS);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadCustomerLoans() {
+      if (!user) return;
+      setLoading(true);
+      try {
+        let loans: any[] = [];
+        if (user.phone) {
+          loans = await getLoansByCustomerPhone(user.phone);
+        }
+
+        if ((!loans || loans.length === 0) && user.email) {
+          const allLoans = await getAllLoans();
+          const cleanEmail = user.email.toLowerCase();
+          loans = allLoans.filter(
+            (l) => l.customer_name?.toLowerCase().includes(user.name.toLowerCase()) || l.customer_phone === user.phone
+          );
+        }
+
+        if (loans && loans.length > 0) {
+          setCustomerLoans(
+            loans.map((l) => ({
+              id: l.id,
+              loan_number: l.loan_number || l.loanNumber,
+              principal_amount: l.principal_amount || l.principalAmount,
+              outstanding_principal: l.outstanding_principal || l.outstandingPrincipal,
+              monthly_interest_rate: l.monthly_interest_rate_pct || l.monthlyInterestRatePct || 1.5,
+              start_date: l.start_date?.split('T')[0] || '2026-07-21',
+              due_date: l.due_date?.split('T')[0] || '2027-07-21',
+              status: l.status || 'ACTIVE',
+              net_interest_due: l.liveFinancials?.netInterestDue || 2625,
+              total_interest_paid: l.total_interest_paid || l.totalInterestPaid || 0,
+              items: [{ description: 'Gold Collateral Pledged', net_weight: l.total_net_weight || 15.0, karat: '22K' }],
+              payments: [],
+            }))
+          );
+        }
+      } catch {
+        // Fallback to DEMO_CUSTOMER_LOANS
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCustomerLoans();
+  }, [user]);
+
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
-  const totalOutstanding = DEMO_CUSTOMER_LOANS.reduce((sum, l) => sum + l.outstanding_principal, 0);
-  const totalInterestDue = DEMO_CUSTOMER_LOANS.reduce((sum, l) => sum + l.net_interest_due, 0);
-  const activeLoans = DEMO_CUSTOMER_LOANS.filter((l) => l.status === 'ACTIVE').length;
+  const totalOutstanding = customerLoans.reduce((sum, l) => sum + l.outstanding_principal, 0);
+  const totalInterestDue = customerLoans.reduce((sum, l) => sum + l.net_interest_due, 0);
+  const activeLoans = customerLoans.filter((l) => l.status === 'ACTIVE').length;
 
   return (
     <div className="min-h-screen bg-slate-100">

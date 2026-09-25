@@ -75,6 +75,16 @@ export async function getCustomerByPhone(phone: string) {
   return { id: doc.id, ...doc.data() };
 }
 
+export async function getCustomerByEmail(email: string) {
+  if (!email) return null;
+  const cleanEmail = email.trim().toLowerCase();
+  const q = query(customersRef, where('email', '==', cleanEmail));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
 export async function getCustomerById(customerId: string) {
   const snap = await getDoc(doc(customersRef, customerId));
   if (!snap.exists()) return null;
