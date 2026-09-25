@@ -1,6 +1,15 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
 export type UserRole = 'admin' | 'customer' | null;
 
@@ -14,6 +23,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  firebaseUser: FirebaseUser | null;
   role: UserRole;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -24,93 +34,158 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo credentials
-const DEMO_ADMINS = [
-  { email: 'admin@swarnapawn.com', password: 'admin123', name: 'Rajesh Verma', id: 'admin-001' },
-  { email: 'staff@swarnapawn.com', password: 'staff123', name: 'Priya Staff', id: 'staff-001' },
-];
-
-const DEMO_CUSTOMERS = [
-  { phone: '9840123456', name: 'Anand Ramesh', id: 'cust-001' },
-  { phone: '9840765432', name: 'Priya Sundaram', id: 'cust-002' },
-  { phone: '9840911223', name: 'Karthik Raja', id: 'cust-003' },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load saved session on mount
+  // Listen to Firebase Auth state changes
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('swarna_auth');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setUser(parsed);
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        // Fetch user profile from Firestore
+        try {
+          const userDocRef = doc(db, 'users', fbUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+              id: fbUser.uid,
+              name: userData.name || fbUser.email?.split('@')[0] || 'User',
+              role: userData.role || 'admin',
+              email: userData.email || fbUser.email || '',
+              phone: userData.phone || '',
+            });
+          } else {
+            // User doc doesn't exist yet, create basic profile
+            setUser({
+              id: fbUser.uid,
+              name: fbUser.email?.split('@')[0] || 'User',
+              role: 'admin',
+              email: fbUser.email || '',
+            });
+          }
+        } catch {
+          // Fallback if Firestore read fails
+          setUser({
+            id: fbUser.uid,
+            name: fbUser.email?.split('@')[0] || 'User',
+            role: 'admin',
+            email: fbUser.email || '',
+          });
+        }
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
       }
-    } catch {
-      // ignore
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const saveSession = (userData: User) => {
-    localStorage.setItem('swarna_auth', JSON.stringify(userData));
-    setUser(userData);
-  };
-
   const loginAdmin = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      // Try to sign in first
+      const credential = await signInWithEmailAndPassword(auth, email, password);
 
-    const match = DEMO_ADMINS.find(
-      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password
-    );
+      // Store/update user profile in Firestore
+      const userDocRef = doc(db, 'users', credential.user.uid);
+      await setDoc(userDocRef, {
+        name: email.split('@')[0],
+        email,
+        role: 'admin',
+        lastLogin: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
 
-    if (match) {
-      saveSession({ id: match.id, name: match.name, role: 'admin', email: match.email });
       return true;
-    }
+    } catch (signInError: any) {
+      // If user doesn't exist, create account
+      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
 
-    // Also allow any email/password for demo purposes
-    if (email && password.length >= 4) {
-      saveSession({ id: 'admin-demo', name: email.split('@')[0], role: 'admin', email });
-      return true;
-    }
+          // Create user profile in Firestore
+          const userDocRef = doc(db, 'users', credential.user.uid);
+          await setDoc(userDocRef, {
+            name: email.split('@')[0],
+            email,
+            role: 'admin',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+          });
 
-    return false;
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
   };
 
   const loginCustomer = async (phone: string, otp: string): Promise<boolean> => {
-    // Simulate OTP verification
-    await new Promise((r) => setTimeout(r, 800));
-
+    // For customer login, we use email/password under the hood
+    // Phone becomes the email: phone@swarnapawn.customer
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
-    const match = DEMO_CUSTOMERS.find((c) => c.phone === cleanPhone);
+    const customerEmail = `${cleanPhone}@swarnapawn.customer`;
+    const customerPassword = `cust_${cleanPhone}_${otp}`;
 
-    // Accept OTP "1234" for demo, or any 4+ digit OTP
-    if (otp.length >= 4) {
-      saveSession({
-        id: match?.id || `cust-${cleanPhone}`,
-        name: match?.name || `Customer ${cleanPhone.slice(-4)}`,
+    try {
+      // Try to sign in
+      const credential = await signInWithEmailAndPassword(auth, customerEmail, customerPassword);
+
+      const userDocRef = doc(db, 'users', credential.user.uid);
+      await setDoc(userDocRef, {
         role: 'customer',
         phone: cleanPhone,
-      });
-      return true;
-    }
+        lastLogin: serverTimestamp(),
+      }, { merge: true });
 
-    return false;
+      return true;
+    } catch (signInError: any) {
+      // If user doesn't exist, create account
+      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, customerEmail, customerPassword);
+
+          const userDocRef = doc(db, 'users', credential.user.uid);
+          await setDoc(userDocRef, {
+            name: `Customer ${cleanPhone.slice(-4)}`,
+            phone: cleanPhone,
+            email: customerEmail,
+            role: 'customer',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+          });
+
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('swarna_auth');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch {
+      // Fallback: clear state manually
+    }
     setUser(null);
+    setFirebaseUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        firebaseUser,
         role: user?.role || null,
         isAuthenticated: !!user,
         isLoading,
