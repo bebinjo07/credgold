@@ -6,6 +6,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowRight, UserCheck, Phone
 } from 'lucide-react';
 import { MetalType, PledgedItem } from '@/types';
+import { createCustomer, createLoan, getCustomerByPhone } from '@/lib/firestore';
 
 interface LoanFormProps {
   onSuccess?: (loanData: any) => void;
@@ -107,8 +108,6 @@ export default function LoanCreationForm({ onSuccess }: LoanFormProps) {
     };
   }, [items, loanTerms.principalAmount, loanTerms.monthlyInterestRatePct]);
 
-import { createCustomer, createLoan, getCustomerByPhone } from '@/lib/firestore';
-
   // Quick lookup customer by phone
   const handlePhoneBlur = async () => {
     if (customer.phone.length >= 10) {
@@ -131,8 +130,9 @@ import { createCustomer, createLoan, getCustomerByPhone } from '@/lib/firestore'
         }
       } catch (e) {
         // Local preview fallback
-      } font-medium;
-      setIsSearchingCustomer(false);
+      } finally {
+        setIsSearchingCustomer(false);
+      }
     }
   };
 
