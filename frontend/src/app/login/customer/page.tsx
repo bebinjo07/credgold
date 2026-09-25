@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, ArrowLeft, Phone, Mail, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, ArrowLeft, Phone, Mail, Loader2, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function CustomerLoginPage() {
@@ -32,8 +32,8 @@ export default function CustomerLoginPage() {
       const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
       setGeneratedOtp(newOtp);
 
-      // Call API route to send email via Resend
-      const response = await fetch('/api/send-otp', {
+      // Call API route to send email via Resend from noreplycredgold@gmail.com
+      await fetch('/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -80,60 +80,57 @@ export default function CustomerLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-10 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-login-pattern login-grid-pattern flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-1/3 right-1/4 translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
         {/* Back Button */}
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-xs font-semibold uppercase tracking-wider mb-6 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to login options
+          Back to login portal
         </Link>
 
         {/* Login Card */}
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-8">
+        <div className="bg-slate-900/90 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl shadow-slate-950/80">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/10">
               <User className="w-8 h-8 text-emerald-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Customer Login</h1>
-            <p className="text-slate-400 text-sm mt-2">
-              Check your loan status & payment history
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">Customer Portal</h1>
+            <p className="text-slate-400 text-xs mt-1.5 font-medium">
+              View Active Loans, Interest Dues & Pledged Items
             </p>
           </div>
 
           {/* OTP Notice */}
           {otpNotice && (
-            <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2 text-emerald-400 text-sm">
+            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-3 text-emerald-400 text-xs font-medium animate-fade-in">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              {otpNotice}
+              <span>{otpNotice}</span>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-2 text-rose-400 text-sm">
+            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-3 text-rose-400 text-xs font-medium animate-fade-in">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Mobile Number */}
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                 Mobile Number
               </label>
               <div className="flex gap-2">
-                <div className="flex items-center px-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 text-sm font-mono">
+                <div className="flex items-center px-3.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-slate-400 text-sm font-mono font-bold">
                   +91
                 </div>
                 <input
@@ -148,16 +145,16 @@ export default function CustomerLoginPage() {
                   }}
                   placeholder="98401 23456"
                   maxLength={12}
-                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition font-mono tracking-wider"
+                  className="flex-1 px-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition font-mono tracking-wider text-sm font-medium"
                   autoComplete="tel"
                 />
               </div>
             </div>
 
-            {/* Email Address for Resend OTP */}
+            {/* Email Address */}
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Email Address (Resend OTP Delivery)
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                Email Address (OTP Delivery)
               </label>
               <div className="relative">
                 <input
@@ -165,10 +162,10 @@ export default function CustomerLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="bsbbebinjo2007@gmail.com"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition pl-10"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition font-medium text-sm"
                   autoComplete="email"
                 />
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
@@ -178,7 +175,7 @@ export default function CustomerLoginPage() {
                 type="button"
                 onClick={handleSendOtp}
                 disabled={isSendingOtp}
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-xl border border-emerald-400/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm tracking-wide"
               >
                 {isSendingOtp ? (
                   <>
@@ -188,7 +185,7 @@ export default function CustomerLoginPage() {
                 ) : (
                   <>
                     <Mail className="w-4 h-4" />
-                    Send OTP via Resend Email
+                    Send Verification OTP via Email
                   </>
                 )}
               </button>
@@ -198,8 +195,8 @@ export default function CustomerLoginPage() {
             {otpSent && (
               <>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                    Enter OTP Sent to Email
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                    Enter Verification OTP Code
                   </label>
                   <input
                     type="text"
@@ -207,52 +204,41 @@ export default function CustomerLoginPage() {
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="Enter 4-digit OTP"
                     maxLength={6}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition font-mono text-center text-2xl tracking-[0.5em]"
+                    className="w-full px-4 py-3.5 bg-slate-950/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition font-mono text-center text-2xl tracking-[0.5em] font-bold"
                     autoFocus
                   />
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 transition"
-                  >
-                    Resend Email OTP
-                  </button>
+                  <div className="flex justify-between items-center mt-2">
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition"
+                    >
+                      Resend Email OTP
+                    </button>
+                    <span className="text-[11px] text-slate-500">Sent from noreplycredgold@gmail.com</span>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm tracking-wide"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Verifying...
+                      Verifying Code...
                     </>
                   ) : (
-                    'Verify & Sign In'
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      Verify & Sign In to Customer Portal
+                    </>
                   )}
                 </button>
               </>
             )}
           </form>
-
-          {/* Demo Info */}
-          <div className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Resend Integration Active
-            </p>
-            <div className="space-y-1 text-xs text-slate-500">
-              <p>
-                <span className="text-slate-400">Email:</span>{' '}
-                <code className="text-emerald-400/80 bg-emerald-500/10 px-1.5 py-0.5 rounded">bsbbebinjo2007@gmail.com</code>
-              </p>
-              <p>
-                <span className="text-slate-400">API Key:</span>{' '}
-                <code className="text-emerald-400/80 bg-emerald-500/10 px-1.5 py-0.5 rounded">re_WbgBbASL...</code>
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
