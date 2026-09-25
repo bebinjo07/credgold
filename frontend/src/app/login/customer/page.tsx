@@ -11,7 +11,7 @@ export default function CustomerLoginPage() {
   const { loginCustomer } = useAuth();
 
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('bsbbebinjo2007@gmail.com');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -23,6 +23,12 @@ export default function CustomerLoginPage() {
   const handleSendOtp = async () => {
     setError('');
 
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      setError('Please enter your email address to receive the verification OTP.');
+      return;
+    }
+
     const targetPhone = phone || '9840123456';
     const cleanPhone = targetPhone.replace(/\D/g, '');
 
@@ -32,19 +38,19 @@ export default function CustomerLoginPage() {
       const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
       setGeneratedOtp(newOtp);
 
-      // Call API route to send email via Resend from noreplycredgold@gmail.com
+      // Call API route to send email via Resend
       await fetch('/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: cleanPhone,
-          email: email || 'bsbbebinjo2007@gmail.com',
+          email: targetEmail,
           otp: newOtp,
         }),
       });
 
       setOtpSent(true);
-      setOtpNotice(`OTP (${newOtp}) sent to ${email || 'bsbbebinjo2007@gmail.com'}!`);
+      setOtpNotice(`OTP (${newOtp}) sent to ${targetEmail}!`);
     } catch {
       setOtpSent(true);
       setOtpNotice(`OTP code active! Check your email inbox.`);
@@ -161,7 +167,7 @@ export default function CustomerLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="bsbbebinjo2007@gmail.com"
+                  placeholder="Enter your customer email address"
                   className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition font-medium text-sm"
                   autoComplete="email"
                 />

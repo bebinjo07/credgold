@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="bsbbebinjo2007@gmail.com"
+                  placeholder="Enter your admin email address"
                   className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition font-medium text-sm"
                   autoComplete="email"
                 />
@@ -138,16 +138,11 @@ export default function AdminLoginPage() {
           {/* Admin Info */}
           <div className="mt-6 p-4 bg-slate-950/60 rounded-2xl border border-slate-800 text-xs">
             <p className="font-bold text-slate-400 uppercase tracking-wider mb-1">
-              Authorized Admin Account
+              Authorized Admin Portal
             </p>
-            <div className="space-y-1 text-slate-400 font-mono text-[11px]">
-              <p>
-                Email: <span className="text-amber-400 font-bold">bsbbebinjo2007@gmail.com</span>
-              </p>
-              <p>
-                Password: <span className="text-amber-400 font-bold">admin123</span>
-              </p>
-            </div>
+            <p className="text-slate-400 text-[11px]">
+              Please enter your authorized owner or administrator credentials.
+            </p>
           </div>
         </div>
       </div>
