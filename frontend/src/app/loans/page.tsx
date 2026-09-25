@@ -9,6 +9,8 @@ import {
 import { Loan } from '@/types';
 import PaymentModal from '@/components/PaymentModal';
 
+import { getAllLoans, closeLoan } from '@/lib/firestore';
+
 export default function LoansLedgerPage() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,14 +22,9 @@ export default function LoansLedgerPage() {
   const fetchLoans = async () => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams();
-      if (statusFilter !== 'ALL') queryParams.append('status', statusFilter);
-      if (search) queryParams.append('search', search);
-
-      const res = await fetch(`http://localhost:5000/api/loans?${queryParams.toString()}`);
-      const data = await res.json();
-      if (data.success && data.loans) {
-        setLoans(data.loans);
+      const fsLoans = await getAllLoans({ status: statusFilter, search });
+      if (fsLoans && fsLoans.length > 0) {
+        setLoans(fsLoans as any);
       } else {
         setLoans(getFallbackLoans());
       }
@@ -58,16 +55,10 @@ export default function LoansLedgerPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/loans/${loan.id}/close`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await res.json();
-      if (data.success) {
-        setReleaseMessage(`Loan ${loan.loan_number} settled & collateral released from vault.`);
-        setTimeout(() => setReleaseMessage(null), 4000);
-        fetchLoans();
-      }
+      await closeLoan(loan.id);
+      setReleaseMessage(`Loan ${loan.loan_number} settled & collateral released from vault.`);
+      setTimeout(() => setReleaseMessage(null), 4000);
+      fetchLoans();
     } catch (e) {
       setReleaseMessage(`Collateral released from vault for ${loan.loan_number}.`);
       setTimeout(() => setReleaseMessage(null), 4000);

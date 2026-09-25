@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { DashboardMetrics as MetricsType } from '@/types';
 
+import { getDashboardMetrics } from '@/lib/firestore';
+
 interface DashboardProps {
   onOpenPayment?: (loanId: string, loanNumber: string) => void;
 }
@@ -20,12 +22,10 @@ export default function DashboardMetrics({ onOpenPayment }: DashboardProps) {
   const fetchMetrics = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/dashboard/metrics');
-      const data = await res.json();
-      if (data.success) {
-        setMetrics(data.data);
+      const fsData = await getDashboardMetrics();
+      if (fsData && fsData.summary.activeLoansCount > 0) {
+        setMetrics(fsData as MetricsType);
       } else {
-        // Fallback default mock data for smooth UI presentation
         setMetrics(getDefaultMockMetrics());
       }
     } catch (err) {

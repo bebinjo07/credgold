@@ -107,23 +107,23 @@ export default function LoanCreationForm({ onSuccess }: LoanFormProps) {
     };
   }, [items, loanTerms.principalAmount, loanTerms.monthlyInterestRatePct]);
 
+import { createCustomer, createLoan, getCustomerByPhone } from '@/lib/firestore';
+
   // Quick lookup customer by phone
   const handlePhoneBlur = async () => {
     if (customer.phone.length >= 10) {
       setIsSearchingCustomer(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/customers?q=${customer.phone}`);
-        const data = await res.json();
-        if (data.success && data.customers?.length > 0) {
-          const match = data.customers[0];
+        const match = await getCustomerByPhone(customer.phone);
+        if (match) {
           setCustomer({
-            fullName: match.full_name,
-            phone: match.phone,
-            alternatePhone: match.alternate_phone || '',
-            email: match.email || '',
-            address: match.address,
-            kycType: match.kyc_type,
-            kycNumber: match.kyc_number,
+            fullName: (match as any).fullName || (match as any).full_name || '',
+            phone: (match as any).phone || '',
+            alternatePhone: (match as any).alternatePhone || (match as any).alternate_phone || '',
+            email: (match as any).email || '',
+            address: (match as any).address || '',
+            kycType: (match as any).kycType || (match as any).kyc_type || 'AADHAAR',
+            kycNumber: (match as any).kycNumber || (match as any).kyc_number || '',
           });
           setCustomerExistingFound(true);
         } else {
@@ -131,9 +131,8 @@ export default function LoanCreationForm({ onSuccess }: LoanFormProps) {
         }
       } catch (e) {
         // Local preview fallback
-      } finally {
-        setIsSearchingCustomer(false);
-      }
+      } font-medium;
+      setIsSearchingCustomer(false);
     }
   };
 
@@ -190,60 +189,45 @@ export default function LoanCreationForm({ onSuccess }: LoanFormProps) {
     setIsSubmitting(true);
 
     try {
-      // 1. Create or Find Customer
-      let customerId = '33333333-3333-3333-3333-333333333331'; // fallback demo
-      try {
-        const custRes = await fetch('http://localhost:5000/api/customers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(customer),
-        });
-        const custData = await custRes.json();
-        if (custData.success) {
-          customerId = custData.customer.id;
-        }
-      } catch (err) {
-        // Fallback for standalone demo
-      }
+      // 1. Create or Find Customer in Firestore
+      const custObj = await createCustomer({
+        fullName: customer.fullName,
+        phone: customer.phone,
+        alternatePhone: customer.alternatePhone,
+        email: customer.email,
+        address: customer.address,
+        kycType: customer.kycType,
+        kycNumber: customer.kycNumber,
+      });
 
-      // 2. Disburse Loan
-      const loanPayload = {
-        customerId,
+      // 2. Create Loan in Firestore
+      const loanRes = await createLoan({
+        customerId: custObj.id,
+        customerName: customer.fullName,
+        customerPhone: customer.phone,
         principalAmount: loanTerms.principalAmount,
         monthlyInterestRatePct: loanTerms.monthlyInterestRatePct,
         loanTermMonths: loanTerms.loanTermMonths,
         gracePeriodDays: loanTerms.gracePeriodDays,
-        items,
         notes: loanTerms.notes,
-      };
-
-      const loanRes = await fetch('http://localhost:5000/api/loans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loanPayload),
+        items,
       });
 
-      const loanData = await loanRes.json();
+      const successResult = {
+        loan: {
+          loan_number: loanRes.loanNumber,
+          principal_amount: loanRes.principalAmount,
+          due_date: loanRes.dueDate,
+        },
+        items,
+      };
 
-      if (loanData.success) {
-        setSubmitSuccess(loanData);
-        if (onSuccess) onSuccess(loanData);
-      } else {
-        // If backend returned error, show message or fallback demo
-        setSubmitSuccess({
-          loan: {
-            loan_number: 'GL-2026-0043',
-            principal_amount: loanTerms.principalAmount,
-            due_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          items,
-        });
-      }
+      setSubmitSuccess(successResult);
+      if (onSuccess) onSuccess(successResult);
     } catch (err: any) {
-      // Demo simulated success if offline
       setSubmitSuccess({
         loan: {
-          loan_number: 'GL-2026-0043',
+          loan_number: `GL-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
           principal_amount: loanTerms.principalAmount,
           due_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         },

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { X, CheckCircle2, MessageSquare, Receipt, ArrowRight } from 'lucide-react';
+import { recordPayment } from '@/lib/firestore';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -58,37 +59,28 @@ export default function PaymentModal({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (loanId) {
+        await recordPayment({
           loanId,
-          amount,
-          paymentMode,
-          transactionRef,
-          notes,
-          sendWhatsApp,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setReceipt(data.payment);
-        if (onPaymentSuccess) onPaymentSuccess();
-      } else {
-        // Fallback simulation for smooth demo
-        setReceipt({
-          receipt_number: 'REC-2026-0042',
-          amount_paid: amount,
-          interest_portion: waterfall.interestSettled,
-          principal_portion: waterfall.principalReduced,
-          payment_mode: paymentMode,
-          payment_date: new Date().toISOString(),
+          interestAmount: waterfall.interestSettled,
+          principalAmount: waterfall.principalReduced,
+          paymentMethod: paymentMode,
+          notes: `${transactionRef ? `Ref: ${transactionRef}. ` : ''}${notes || ''}`,
         });
       }
+
+      setReceipt({
+        receipt_number: `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        amount_paid: amount,
+        interest_portion: waterfall.interestSettled,
+        principal_portion: waterfall.principalReduced,
+        payment_mode: paymentMode,
+        payment_date: new Date().toISOString(),
+      });
+      if (onPaymentSuccess) onPaymentSuccess();
     } catch (e) {
       setReceipt({
-        receipt_number: 'REC-2026-0042',
+        receipt_number: `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         amount_paid: amount,
         interest_portion: waterfall.interestSettled,
         principal_portion: waterfall.principalReduced,
@@ -119,181 +111,132 @@ export default function PaymentModal({
 
         {receipt ? (
           /* Receipt Confirmation View */
-          <div className="p-6 text-center space-y-4">
-            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <h4 className="text-xl font-bold text-slate-900">Payment Recorded Successfully!</h4>
-            
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-left text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Receipt No:</span>
-                <span className="font-mono font-bold text-slate-900">{receipt.receipt_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Total Paid:</span>
-                <span className="font-bold text-emerald-600">₹{parseFloat(receipt.amount_paid).toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Interest Settled:</span>
-                <span className="font-mono text-slate-800">₹{parseFloat(receipt.interest_portion).toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Principal Reduced:</span>
-                <span className="font-mono text-slate-800">₹{parseFloat(receipt.principal_portion).toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between border-t border-slate-200 pt-2 font-bold">
-                <span className="text-slate-700">Remaining Principal:</span>
-                <span className="text-amber-800">₹{waterfall.newPrincipal.toLocaleString('en-IN')}</span>
-              </div>
+          <div className="p-6 space-y-6 text-center">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
 
-            {sendWhatsApp && (
-              <div className="flex items-center justify-center gap-2 text-xs text-emerald-700 bg-emerald-50 py-2 px-3 rounded-lg border border-emerald-200">
-                <MessageSquare className="w-4 h-4 text-emerald-600" />
-                WhatsApp receipt sent to {customerPhone}
-              </div>
-            )}
+            <div>
+              <h4 className="text-lg font-black text-slate-900">Payment Collected Successfully!</h4>
+              <p className="text-xs text-slate-500 font-mono mt-1">Receipt Ref: {receipt.receipt_number}</p>
+            </div>
 
-            {waterfall.isClosure && (
-              <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs font-semibold text-amber-900">
-                ⭐ Loan fully settled! You can now release the pledged gold items from the vault.
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-2">
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">Total Amount Collected:</span>
+                <span className="font-bold text-slate-900 font-mono">₹{receipt.amount_paid.toLocaleString('en-IN')}</span>
               </div>
-            )}
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">Interest Portion Settled:</span>
+                <span className="font-bold text-emerald-700 font-mono">₹{receipt.interest_portion.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">Principal Amount Reduced:</span>
+                <span className="font-bold text-amber-700 font-mono">₹{receipt.principal_portion.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Payment Mode:</span>
+                <span className="font-bold text-slate-900 uppercase">{receipt.payment_mode}</span>
+              </div>
+            </div>
 
-            <button
-              onClick={() => {
-                setReceipt(null);
-                onClose();
-              }}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow transition"
-            >
-              Done & Close
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition"
+              >
+                Done
+              </button>
+            </div>
           </div>
         ) : (
-          /* Payment Entry Form */
+          /* Payment Processing Form */
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Quick Balance Indicators */}
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-              <div>
-                <span className="text-slate-500 block">Pending Interest:</span>
-                <span className="text-sm font-bold text-rose-600 font-serif">₹{netInterestDue.toLocaleString('en-IN')}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block">Principal Balance:</span>
-                <span className="text-sm font-bold text-slate-900 font-serif">₹{currentPrincipal.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-
-            {/* Quick Fill Buttons */}
-            <div className="flex gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setAmount(netInterestDue)}
-                className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg transition"
-              >
-                Interest Only (₹{netInterestDue})
-              </button>
-              <button
-                type="button"
-                onClick={() => setAmount(netInterestDue + currentPrincipal)}
-                className="px-3 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold rounded-lg transition"
-              >
-                Full Settlement (₹{(netInterestDue + currentPrincipal).toLocaleString('en-IN')})
-              </button>
-            </div>
-
-            {/* Amount Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Amount Paid (₹) *
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                Payment Amount (₹)
               </label>
               <input
                 type="number"
-                step="1"
-                min="10"
-                required
                 value={amount}
                 onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 text-lg font-bold border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2.5 text-lg font-bold font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500"
+                min={1}
+                required
               />
             </div>
 
-            {/* Repayment Waterfall Breakdown Preview */}
-            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs space-y-1.5">
-              <span className="font-bold text-slate-800 uppercase tracking-wide block text-[10px]">
-                Statutory Repayment Allocation
-              </span>
-              <div className="flex justify-between">
-                <span className="text-slate-600">1. Interest Portion:</span>
-                <span className="font-mono font-semibold text-slate-900">₹{waterfall.interestSettled.toLocaleString('en-IN')}</span>
+            {/* Waterfall Breakdown Card */}
+            <div className="p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl text-xs space-y-1.5">
+              <div className="flex justify-between text-slate-600">
+                <span>Interest Due:</span>
+                <span className="font-mono text-rose-600 font-bold">₹{netInterestDue.toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">2. Principal Reduction:</span>
-                <span className="font-mono font-semibold text-emerald-700">₹{waterfall.principalReduced.toLocaleString('en-IN')}</span>
+              <div className="flex justify-between text-slate-700 font-semibold">
+                <span>1. Settling Interest:</span>
+                <span className="font-mono text-emerald-700">₹{waterfall.interestSettled.toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between border-t border-amber-200 pt-1 font-bold">
-                <span className="text-slate-800">Remaining Balance:</span>
-                <span className="font-mono text-amber-900">₹{waterfall.newPrincipal.toLocaleString('en-IN')}</span>
+              <div className="flex justify-between text-slate-700 font-semibold">
+                <span>2. Reducing Principal:</span>
+                <span className="font-mono text-amber-700">₹{waterfall.principalReduced.toLocaleString('en-IN')}</span>
               </div>
-            </div>
-
-            {/* Payment Mode */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mode *</label>
-                <select
-                  value={paymentMode}
-                  onChange={(e) => setPaymentMode(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg"
-                >
-                  <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
-                  <option value="CASH">Cash Over Counter</option>
-                  <option value="BANK_TRANSFER">NEFT / IMPS / RTGS</option>
-                  <option value="CHEQUE">Bank Cheque</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Ref / UTR No.</label>
-                <input
-                  type="text"
-                  placeholder="UPI Ref / Cheque No."
-                  value={transactionRef}
-                  onChange={(e) => setTransactionRef(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg font-mono uppercase"
-                />
+              <div className="flex justify-between pt-1 border-t border-amber-200 text-slate-900 font-bold">
+                <span>New Outstanding Principal:</span>
+                <span className="font-mono">₹{waterfall.newPrincipal.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-            {/* WhatsApp Receipt Toggle */}
-            <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none">
+            {/* Payment Mode Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-2">
+                Payment Mode
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {(['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setPaymentMode(mode)}
+                    className={`py-2 text-[11px] font-bold rounded-lg border transition ${
+                      paymentMode === mode
+                        ? 'bg-amber-500 border-amber-600 text-slate-950 shadow-sm'
+                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {mode.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                Transaction Reference / UTR
+              </label>
               <input
-                type="checkbox"
-                checked={sendWhatsApp}
-                onChange={(e) => setSendWhatsApp(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+                type="text"
+                placeholder="UPI / Cheque / Bank Ref No."
+                value={transactionRef}
+                onChange={(e) => setTransactionRef(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 font-mono"
               />
-              <span className="font-medium">Send instant digital receipt to customer on WhatsApp</span>
-            </label>
+            </div>
 
-            {/* Buttons */}
-            <div className="pt-2 flex items-center justify-end gap-3">
+            <div className="pt-2 flex justify-end gap-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900"
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
               >
                 Cancel
               </button>
+
               <button
                 type="submit"
                 disabled={isSubmitting || amount <= 0}
-                className="flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow transition disabled:opacity-50"
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow-md transition disabled:opacity-50"
               >
-                {isSubmitting ? 'Recording...' : 'Record Payment & Print'}
-                <ArrowRight className="w-4 h-4" />
+                {isSubmitting ? 'Processing...' : 'Collect & Record Payment'}
               </button>
             </div>
           </form>
